@@ -10,6 +10,7 @@ import 'package:nicu/screen/splash_screen/splash.dart';
 import 'screen/first_page/first_page.dart';
 import 'package:localization/localization.dart';
 import 'package:nicu/component/applocal.dart';
+import 'package:nicu/screen/maps/map.dart';
 
 void main() {
   runApp(MyApp());
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: FirstPage(),
+      home: Map(),
       //-----------------localization--------------------
       localizationsDelegates: [
         AppLocale.delegate,

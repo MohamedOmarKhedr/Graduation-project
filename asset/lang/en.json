@@ -1,6 +1,13 @@
 {
     "signIn":"SIGN IN",
     "signUp":"SIGN UP",
-    "weHope":"We Hope To Be Healthy"
+    "weHope":"We Hope To Be Healthy",
+    "LS":"Location Service",
+    "LSNE":"Location Service Not Enabled",
+    "currentLocation":"Current Location",
+    "NIconnection":"No Internet Connection",
+    "governmentHospital":"Government Hospital",
+    "charityCenter":"Charity Center",
+    "specialCenter":"Special Center"
 
 }

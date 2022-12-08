@@ -1,5 +1,13 @@
 {
     "signIn":"تسجيل الدخول",
     "signUp":"إنشاء حساب",
-    "weHope":"نتمني لكم صحة جيدة"
+    "weHope":"نتمني لكم صحة جيدة",
+    "LS":"خدمة الموقع",
+    "LSNA":"خدمة الموقع غير متاحة",
+    "currentLocation":"الموقع الحالي",
+    "NIconnection":"غير متصل بالانترنت",
+    "governmentHospital":"مستشفي حكومي",
+    "charityCenter":"مركز خيري",
+    "specialCenter":"مركز خاص"
+
 }
