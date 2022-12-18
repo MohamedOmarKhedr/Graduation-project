@@ -5,8 +5,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator_android/geolocator_android.dart';
-import 'package:nicu/component/setMarkers.dart';
+
 import 'package:nicu/component/applocal.dart';
+import 'package:nicu/screen/maps/get_markers.dart';
 
 class Map extends StatefulWidget {
   @override
@@ -16,7 +17,7 @@ class Map extends StatefulWidget {
 }
 
 class MapState extends State<Map> {
-  Set<Marker> myMarkers = markers;
+  late Set<Marker> myMarkers;
 
   Future checkConnection() async {
     ConnectivityResult result = await Connectivity().checkConnectivity();
@@ -68,10 +69,14 @@ class MapState extends State<Map> {
   }
 
   Widget buildMap() {
+    getMarkers();
+    myMarkers = markers;
+
     return GoogleMap(
       initialCameraPosition: CameraPosition(
-        target: LatLng(c1?.latitude ?? 30, c1?.longitude ?? 31),
-        zoom: 12,
+        target: LatLng(
+            c1 != null ? c1!.latitude : 30, c1 != null ? c1!.longitude : 31),
+        zoom: 4,
       ),
       onMapCreated: (GoogleMapController googleMapController) {
         getLatLng();
@@ -88,8 +93,6 @@ class MapState extends State<Map> {
     getPosition();
     checkConnection();
     getLatLng();
-    _goToPosition();
-    buildMap();
   }
 
   @override
@@ -97,163 +100,167 @@ class MapState extends State<Map> {
     return StreamBuilder<ConnectivityResult>(
       stream: Connectivity().onConnectivityChanged,
       builder: (context, snapshot) {
-        return Scaffold(
-          body: snapshot.data == ConnectivityResult.none
-              ? Center(
-                  child: Text('${getLang(context, "NIconnection")}'),
-                )
-              : Stack(
-                  children: [
-                    buildMap(),
-                    Container(
-                      alignment: Alignment.topCenter,
-                      child: SvgPicture.asset(
-                        "asset/Images/b.svg",
-                        height: 90,
-                        width: 60,
+        return SafeArea(
+          child: Scaffold(
+            body: snapshot.data == ConnectivityResult.none
+                ? Center(
+                    child: Text('${getLang(context, "NIconnection")}'),
+                  )
+                : Stack(
+                    children: [
+                      buildMap(),
+                      Container(
+                        alignment: Alignment.topCenter,
+                        child: SvgPicture.asset(
+                          "asset/Images/b.svg",
+                          height: 90,
+                          width: 60,
+                        ),
                       ),
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.5),
-                                    spreadRadius: 5,
-                                    blurRadius: 7,
-                                    offset: Offset(
-                                        0, 3), // changes position of shadow
-                                  ),
-                                ],
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      spreadRadius: 5,
+                                      blurRadius: 7,
+                                      offset: Offset(
+                                          0, 3), // changes position of shadow
+                                    ),
+                                  ],
+                                ),
+                                constraints:
+                                    BoxConstraints(minHeight: 70, minWidth: 85),
+                                margin: EdgeInsets.fromLTRB(8, 0, 8, 30),
+                                padding: EdgeInsets.all(5),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.red[500],
+                                            size: 12,
+                                          ),
+                                          SizedBox(
+                                            width: 2,
+                                          ),
+                                          Text(
+                                            '${getLang(context, "currentLocation")}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 3,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.green[500],
+                                            size: 12,
+                                          ),
+                                          SizedBox(
+                                            width: 2,
+                                          ),
+                                          Text(
+                                            '${getLang(context, "governmentHospital")}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 3,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.yellow[500],
+                                            size: 12,
+                                          ),
+                                          SizedBox(
+                                            width: 2,
+                                          ),
+                                          Text(
+                                            '${getLang(context, "charityCenter")}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                          )
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height: 3,
+                                      ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on,
+                                            color: Colors.blue[700],
+                                            size: 12,
+                                          ),
+                                          const SizedBox(
+                                            width: 2,
+                                          ),
+                                          Text(
+                                            '${getLang(context, "specialCenter")}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black),
+                                          )
+                                        ],
+                                      )
+                                    ]),
                               ),
-                              constraints:
-                                  BoxConstraints(minHeight: 70, minWidth: 85),
-                              margin: EdgeInsets.fromLTRB(8, 0, 8, 30),
-                              padding: EdgeInsets.all(5),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          color: Colors.red[500],
-                                          size: 12,
-                                        ),
-                                        SizedBox(
-                                          width: 2,
-                                        ),
-                                        Text(
-                                          '${getLang(context, "currentLocation")}',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black),
-                                        )
-                                      ],
+                              const Spacer(),
+                              Container(
+                                  margin:
+                                      const EdgeInsets.fromLTRB(8, 0, 8, 30),
+                                  child: FloatingActionButton(
+                                    backgroundColor: Colors.redAccent,
+                                    onPressed: () {
+                                      setState(() {
+                                        if (c1 != null) {
+                                          _goToPosition();
+                                        }
+                                      });
+                                    },
+                                    child: Icon(
+                                      Icons.place,
+                                      color: Colors.white,
                                     ),
-                                    SizedBox(
-                                      height: 3,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          color: Colors.green[500],
-                                          size: 12,
-                                        ),
-                                        SizedBox(
-                                          width: 2,
-                                        ),
-                                        Text(
-                                          '${getLang(context, "governmentHospital")}',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black),
-                                        )
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 3,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          color: Colors.yellow[500],
-                                          size: 12,
-                                        ),
-                                        SizedBox(
-                                          width: 2,
-                                        ),
-                                        Text(
-                                          '${getLang(context, "charityCenter")}',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black),
-                                        )
-                                      ],
-                                    ),
-                                    const SizedBox(
-                                      height: 3,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          color: Colors.blue[700],
-                                          size: 12,
-                                        ),
-                                        const SizedBox(
-                                          width: 2,
-                                        ),
-                                        Text(
-                                          '${getLang(context, "specialCenter")}',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black),
-                                        )
-                                      ],
-                                    )
-                                  ]),
-                            ),
-                            const Spacer(),
-                            Container(
-                                margin: const EdgeInsets.fromLTRB(8, 0, 8, 30),
-                                child: FloatingActionButton(
-                                  backgroundColor: Colors.redAccent,
-                                  onPressed: () {
-                                    setState(() {
-                                      if (c1 != null) {
-                                        _goToPosition();
-                                      }
-                                    });
-                                  },
-                                  child: Icon(
-                                    Icons.place,
-                                    color: Colors.white,
-                                  ),
-                                )),
-                          ],
-                        )
-                      ],
-                    ),
-                  ],
-                ),
+                                  )),
+                            ],
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
         );
       },
     );
