@@ -12,6 +12,7 @@ import 'package:localization/localization.dart';
 import 'package:nicu/component/applocal.dart';
 import 'package:nicu/screen/maps/map.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
 void main() {
   runApp(MyApp());
 }
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       home: Map(),
       //-----------------localization--------------------
