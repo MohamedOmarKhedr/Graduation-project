@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:nicu/component/get_markers.dart';
+import 'package:nicu/screen/maps/get_markers.dart';
 import 'package:nicu/component/text_copied.dart';
 import 'package:nicu/main.dart';
 import 'package:quickalert/quickalert.dart';
