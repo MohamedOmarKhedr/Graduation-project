@@ -5,9 +5,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator_android/geolocator_android.dart';
-
 import 'package:nicu/component/applocal.dart';
-import 'package:nicu/screen/maps/get_markers.dart';
+import 'package:nicu/screen/maps/map_component/get_markers.dart';
+import 'package:nicu/screen/maps/map_component/location_permission.dart';
+import 'package:nicu/screen/maps/map_component/notes.dart';
+import 'package:provider/provider.dart';
+
+import 'add_current_location_marker.dart';
 
 class Map extends StatefulWidget {
   @override
@@ -17,82 +21,86 @@ class Map extends StatefulWidget {
 }
 
 class MapState extends State<Map> {
-  late Set<Marker> myMarkers;
+  refersh() {
+    setState(() {});
+  }
 
   Future checkConnection() async {
     ConnectivityResult result = await Connectivity().checkConnectivity();
     print(result.name);
   }
 
-  static Future getPosition() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+  Position? currentLocation;
+  Future<void> getLatLng() async {
+    await Locationpermissiom.getMyPosition();
+
+    currentLocation = await Geolocator.getLastKnownPosition().whenComplete(() {
+      setState(() {});
       ;
-    }
-    LocationPermission per = await Geolocator.checkPermission();
-    if (per == LocationPermission.denied) {
-      per = await Geolocator.requestPermission();
-    }
-  }
-
-//-------------------------
-
-  static Position? c1;
-
-  Future<Position?> getLatLng() async {
-    c1 = await Geolocator.getCurrentPosition();
-    print(c1);
-
-    return c1;
+    });
   }
 
   Completer<GoogleMapController> _myController = Completer();
   Future<void> _goToPosition() async {
-    if (c1 != null) {
-      setState(() {
-        myMarkers.add(Marker(
-          markerId: MarkerId('0'),
-          position: LatLng(c1!.latitude, c1!.longitude),
-          infoWindow: InfoWindow(
-            title: '${getLang(context, "currentLocation")}',
-          ),
-        ));
-      });
-      final GoogleMapController controller = await _myController.future;
-      controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(c1!.latitude, c1!.longitude),
-          zoom: 12,
-        ),
-      ));
-    }
+    GoogleMapController controller = await _myController.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(
+      CameraPosition(
+        target: LatLng(currentLocation!.latitude, currentLocation!.longitude),
+        zoom: 12,
+      ),
+    ));
+    setState(() {});
+    ;
   }
 
-  Widget buildMap() {
-    getMarkers();
-    myMarkers = markers;
+//-------------------------
+
+  @override
+  void initState() {
+    super.initState();
+    getCustomMarker();
+    checkConnection();
+    getLatLng();
+  }
+
+  Set<Marker>? myMarkers;
+  Widget buildMap({
+    String? markersType,
+  }) {
+    if (currentLocation != null) {
+      if (markersType == "Government Hospitals") {
+        addCurrentLocationMarker(currentLocation: currentLocation!);
+        getGovernmentHospitalMarkers();
+        myMarkers = markers;
+      } else if (markersType == "Charity Centers") {
+        addCurrentLocationMarker(currentLocation: currentLocation!);
+        getCharityCenterMarkers();
+        myMarkers = markers;
+      } else if (markersType == "Special Centers") {
+        addCurrentLocationMarker(currentLocation: currentLocation!);
+        getSpecialCenterMarkers();
+        myMarkers = markers;
+      } else {
+        addCurrentLocationMarker(currentLocation: currentLocation!);
+        getAllMarkers();
+        myMarkers = markers;
+      }
+    }
 
     return GoogleMap(
       initialCameraPosition: CameraPosition(
-        target: LatLng(
-            c1 != null ? c1!.latitude : 30, c1 != null ? c1!.longitude : 31),
-        zoom: 4,
+        target: LatLng(currentLocation != null ? currentLocation!.latitude : 30,
+            currentLocation != null ? currentLocation!.longitude : 31),
+        // زوووم الماب
+        zoom: 5,
       ),
       onMapCreated: (GoogleMapController googleMapController) {
         getLatLng();
         _myController.complete(googleMapController);
       },
-      markers: myMarkers,
+      markers: myMarkers!,
       zoomControlsEnabled: false,
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getPosition();
-    checkConnection();
-    getLatLng();
   }
 
   @override
@@ -102,167 +110,108 @@ class MapState extends State<Map> {
       builder: (context, snapshot) {
         return SafeArea(
           child: Scaffold(
-            body: snapshot.data == ConnectivityResult.none
-                ? Center(
-                    child: Text('${getLang(context, "NIconnection")}'),
-                  )
-                : Stack(
-                    children: [
-                      buildMap(),
-                      Container(
-                        alignment: Alignment.topCenter,
-                        child: SvgPicture.asset(
-                          "asset/Images/b.svg",
-                          height: 90,
-                          width: 60,
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.5),
-                                      spreadRadius: 5,
-                                      blurRadius: 7,
-                                      offset: Offset(
-                                          0, 3), // changes position of shadow
+              body: snapshot.data == ConnectivityResult.none
+                  ? Center(
+                      child: Text('${getLang(context, "NIconnection")}'),
+                    )
+                  : currentLocation != null
+                      ? Stack(
+                          children: [
+                            buildMap(
+                              markersType: "All Centers",
+                            ),
+                            Container(
+                              height: 42,
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Expanded(
+                                child: ListView(
+                                  scrollDirection: Axis.horizontal,
+                                  children: [
+                                    markerTypeButton(
+                                      markerType: "All Centers",
+                                    ),
+                                    markerTypeButton(
+                                      markerType: "Government Hospitals",
+                                    ),
+                                    markerTypeButton(
+                                      markerType: "Charity Centers",
+                                    ),
+                                    markerTypeButton(
+                                      markerType: "Special Centers",
                                     ),
                                   ],
                                 ),
-                                constraints:
-                                    BoxConstraints(minHeight: 70, minWidth: 85),
-                                margin: EdgeInsets.fromLTRB(8, 0, 8, 30),
-                                padding: EdgeInsets.all(5),
-                                child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.red[500],
-                                            size: 12,
-                                          ),
-                                          SizedBox(
-                                            width: 2,
-                                          ),
-                                          Text(
-                                            '${getLang(context, "currentLocation")}',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 3,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.green[500],
-                                            size: 12,
-                                          ),
-                                          SizedBox(
-                                            width: 2,
-                                          ),
-                                          Text(
-                                            '${getLang(context, "governmentHospital")}',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black),
-                                          )
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 3,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.yellow[500],
-                                            size: 12,
-                                          ),
-                                          SizedBox(
-                                            width: 2,
-                                          ),
-                                          Text(
-                                            '${getLang(context, "charityCenter")}',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black),
-                                          )
-                                        ],
-                                      ),
-                                      const SizedBox(
-                                        height: 3,
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: Colors.blue[700],
-                                            size: 12,
-                                          ),
-                                          const SizedBox(
-                                            width: 2,
-                                          ),
-                                          Text(
-                                            '${getLang(context, "specialCenter")}',
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black),
-                                          )
-                                        ],
-                                      )
-                                    ]),
                               ),
-                              const Spacer(),
-                              Container(
-                                  margin:
-                                      const EdgeInsets.fromLTRB(8, 0, 8, 30),
-                                  child: FloatingActionButton(
-                                    backgroundColor: Colors.redAccent,
-                                    onPressed: () {
-                                      setState(() {
-                                        if (c1 != null) {
-                                          _goToPosition();
-                                        }
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.place,
-                                      color: Colors.white,
-                                    ),
-                                  )),
-                            ],
-                          )
-                        ],
-                      ),
-                    ],
-                  ),
-          ),
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    notes(),
+                                    const Spacer(),
+                                    Container(
+                                        margin: const EdgeInsets.fromLTRB(
+                                            8, 0, 8, 30),
+                                        child: FloatingActionButton(
+                                          backgroundColor: Colors.redAccent,
+                                          onPressed: () {
+                                            getLatLng();
+                                            _goToPosition();
+                                            setState(() {});
+                                            ;
+                                          },
+                                          child: Icon(
+                                            Icons.place,
+                                            color: Colors.white,
+                                          ),
+                                        )),
+                                  ],
+                                )
+                              ],
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child:
+                              Text('loading', style: TextStyle(fontSize: 25)))),
         );
       },
+    );
+  }
+
+  GestureDetector markerTypeButton({required String markerType}) {
+    return GestureDetector(
+      onTap: () {
+        buildMap(
+          markersType: markerType,
+        );
+        setState(() {});
+        markers.removeWhere((x) => x != null);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        margin: EdgeInsets.symmetric(horizontal: 5),
+        height: 23,
+        constraints: BoxConstraints(minWidth: 25),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(.95),
+              spreadRadius: .5,
+              blurRadius: .5,
+              offset: Offset(1, 1), // changes position of shadow
+            ),
+          ],
+        ),
+        child: Text(
+          "$markerType",
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }
